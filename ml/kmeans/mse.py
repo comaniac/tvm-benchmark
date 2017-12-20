@@ -14,7 +14,8 @@ center = tvm.placeholder((C, V), name='center')
 # Compute distances
 rv = tvm.reduce_axis((0, V), name='rv')
 dis = tvm.compute((N, C), lambda n, c: tvm.sum(
-    (data[n, rv]-center[c, rv])*(data[n, rv]-center[c, rv]), axis=rv),
+    (data[n, rv]-center[c, rv]).astype('float64')*
+    (data[n, rv]-center[c, rv]).astype('float64'), axis=rv),
     name='dis')
 
 rc = tvm.reduce_axis((0, C), name='rc')
@@ -28,5 +29,5 @@ mse = tvm.compute((1,), lambda i: tvm.sum(mse_n[rn], axis=rn), name='mse')
 s = tvm.create_schedule(mse.op)
 
 # Compilation
-calc = tvm.build(s, [data, center, mse], "llvm")
+calc = tvm.build(s, [data, center, mse])
 assert calc

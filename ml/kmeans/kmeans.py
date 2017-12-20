@@ -56,7 +56,7 @@ s = tvm.create_schedule([idx.op, new_center.op])
 # Compilation
 #print(tvm.lower(s, [data, center, dis, idx,
 #    center_cnt, new_center], simple_mode=True))
-func = tvm.build(s, [data, center, new_center], "llvm")
+func = tvm.build(s, [data, center, new_center])
 assert func
 
 #print("------func code------")
@@ -64,9 +64,9 @@ assert func
 
 # Generate data
 in_data = tvm.nd.array(np.random.uniform(
-    size=(in_n, in_v), low=0.0, high=0.1).astype(data.dtype), tvm.cpu(0))
+    size=(in_n, in_v), low=0.0, high=1.0).astype(data.dtype), tvm.cpu(0))
 in_center = tvm.nd.array(np.random.uniform(
-    size=(in_c, in_v), low=0.0, high=0.1).astype(center.dtype), tvm.cpu(0))
+    size=(in_c, in_v), low=0.0, high=1.0).astype(center.dtype), tvm.cpu(0))
 
 # Evaluation
 evaluator = func.time_evaluator(func.entry_name, tvm.cpu(0), number = 1)
@@ -75,13 +75,13 @@ has_error = False
 for i in range(iter_time):
     out_new_center = tvm.nd.array(np.zeros((in_c, in_v), dtype=data.dtype),
             tvm.cpu(0))
-    out_mse = tvm.nd.array(np.zeros(1, dtype="float32"), tvm.cpu(0))
+    out_mse = tvm.nd.array(np.zeros(1, dtype='float64'), tvm.cpu(0))
    
     t = evaluator(in_data, in_center, out_new_center).mean
     mse.calc(in_data, out_new_center, out_mse)
     curr_mse = out_mse.asnumpy()[0]
     delta_mse = curr_mse - last_mse
-    print("Iteration {0} ({1}s), delta MSE = {2}".format(i, t, delta_mse))
+    print("Iteration {0} ({1}s), delta MSE = {2}".format(i + 1, t, delta_mse))
     if delta_mse > 0:
         has_error = True
     last_mse = curr_mse
