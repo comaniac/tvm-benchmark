@@ -5,6 +5,7 @@ import numpy as np
 import mse
 
 # Config
+display_on = False
 in_n = 819200
 in_c = 5
 in_v = 34
@@ -71,22 +72,57 @@ in_center = tvm.nd.array(np.random.uniform(
 # Evaluation
 evaluator = func.time_evaluator(func.entry_name, tvm.cpu(0), number = 1)
 last_mse = float('inf')
-has_error = False
-for i in range(iter_time):
+converged = False
+
+if display_on and in_v != 2:
+    print("WARNING: Turn off display because it only allows 2-D data points.")
+    display_on = False
+
+if display_on:
+    import matplotlib.pyplot as plt
+    from matplotlib import animation
+    fig = plt.figure()
+    ax = plt.axes(xlim=(0, 1), ylim=(0, 1))
+    np_data = in_data.asnumpy()
+    if len(np_data) > 512:
+        print("WARNING: Only display centrids due to too many data points.")
+
+def run(i):
+    global last_mse
+    global converged
+    global evaluator
+    global in_data
+    global in_center
+    global np_data
     out_new_center = tvm.nd.array(np.zeros((in_c, in_v), dtype=data.dtype),
             tvm.cpu(0))
     out_mse = tvm.nd.array(np.zeros(1, dtype='float64'), tvm.cpu(0))
-   
     t = evaluator(in_data, in_center, out_new_center).mean
     mse.calc(in_data, out_new_center, out_mse)
     curr_mse = out_mse.asnumpy()[0]
     delta_mse = curr_mse - last_mse
-    print("Iteration {0} ({1}s), delta MSE = {2}".format(i + 1, t, delta_mse))
+    print("Round {0} ({1}s), delta MSE = {2}".format(i + 1, t, delta_mse))
     if delta_mse > 0:
-        has_error = True
+        converged = True
     last_mse = curr_mse
     in_center = out_new_center
 
-if has_error:
-    print("Error: MSE increased!")
+    if display_on:
+        np_center = out_new_center.asnumpy()
+        ax.clear()
+        if len(np_data) <= 512:
+            ax.scatter(np_data[:, 0], np_data[:, 1], c='b')
+        ax.scatter(np_center[:, 0], np_center[:, 1], c='r', s=100)
+    return []
+
+if display_on:
+    anim = animation.FuncAnimation(fig, run, frames=iter_time, interval=1000,
+            blit=True, repeat=False)
+    plt.show()
+else:
+    for i in range(iter_time):
+        run(i)
+        if converged:
+            break
+
 print("Finished")
