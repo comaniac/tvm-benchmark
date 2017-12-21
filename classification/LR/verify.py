@@ -10,11 +10,15 @@ L = tvm.var('L') # Label number
 
 label = tvm.placeholder((N, L), name='label')
 data = tvm.placeholder((N, D), name='data')
-weight = tvm.placeholder((L, D), name='weight')
+weight = tvm.placeholder((L, D + 1), name='weight')
 
-rd = tvm.reduce_axis((0, D), name='rd')
+data_expand = tvm.compute((N, D + 1), lambda n, d:
+        tvm.select((d < D), data[n, d], tvm.const(1, dtype=data.dtype)),
+        name='data_expand')
+
+rd = tvm.reduce_axis((0, D + 1), name='rd')
 dot = tvm.compute((N, L), lambda n, l:
-        tvm.sum(weight[l, rd] * data[n, rd], axis=rd),
+        tvm.sum(weight[l, rd] * data_expand[n, rd], axis=rd),
         name='dot')
 
 factor = tvm.compute((N, L), lambda n, l: 1 / (1 + tvm.exp(-dot[n, l])),
