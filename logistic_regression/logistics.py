@@ -6,10 +6,12 @@ import numpy as np
 import verify
 
 # Config
-iter_time = 10
+display_on = False
+iter_time = 20
 in_n = 20000
 in_l = 10
 in_d = 784
+learning_rate = 50e-8
 
 if len(sys.argv) > 1:
     data_file = sys.argv[1]
@@ -40,7 +42,7 @@ gradient = tvm.compute((L, D), lambda l, d:
         name='gradient')
 
 new_weight = tvm.compute((L, D), lambda l, d:
-        weight[l, d] - gradient[l, d],
+        weight[l, d] - learning_rate * gradient[l, d],
         name='new_weight')
 
 # === End computation
@@ -75,12 +77,13 @@ else:
     # Generate data
     np_data = np.random.uniform(size=(in_n, in_d), low=-1, high=3)
     golden_weight = np.random.uniform(size=(in_l, in_d), low=-1, high=1)
+    noise = np.random.uniform(size=(in_n), low=-0.2, high=0.2)
     np_label = []
     for n in range(in_n):
         tmp = []
         for l in range(in_l):
             dot = golden_weight[l].dot(np_data[n])
-            tmp.append(1 / (1 + np.exp(-dot)))
+            tmp.append(1 / (1 + np.exp(-dot)) + noise[n])
         idx = np.argmax(tmp)
         np_label.append([1 if i == idx else -1 for i in range(in_l)])
     np_label = np.array(np_label)
@@ -91,7 +94,7 @@ in_weight = tvm.nd.array(np.zeros((in_l, in_d), dtype=weight.dtype),
         tvm.cpu(0))
 
 # Evaluation
-err_rate = 1.0
+err_rate_history = []
 for i in range(iter_time):
     out_weight = tvm.nd.array(np.zeros((in_l, in_d), dtype=weight.dtype),
             tvm.cpu(0))
@@ -101,5 +104,15 @@ for i in range(iter_time):
     verify.calc(in_data, in_label, in_weight, out_err)
     err_rate = float(out_err.asnumpy()[0]) / in_n
     print("Round {0}, error rate {1}%".format(i, 100.0 * err_rate))
+    err_rate_history.append(err_rate)
+
+if display_on:
+    print("Generating learning trend graph...")
+    import matplotlib.pyplot as plt
+    from matplotlib import animation
+    fig = plt.figure()
+    ax = plt.axes()
+    ax.plot(np.arange(0, iter_time), err_rate_history)
+    plt.show()
 
 print("Finished")
