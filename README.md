@@ -1,5 +1,4 @@
 # TVM Benchmark
-==============================================
 A benchmark set for [TVM](https://github.com/dmlc/tvm). We mainly target the applications that are **NOT** used for deep learning.
 
 
