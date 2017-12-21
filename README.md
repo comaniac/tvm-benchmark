@@ -2,13 +2,12 @@
 A benchmark set for [TVM](https://github.com/dmlc/tvm). We mainly target the applications that are **NOT** used for deep learning.
 
 
-## Case Lists
----------------
+## Case List
 ### K-Means Clustering
 A method of vector quantization which is popular for cluster analysis in data mining.
 
 ### Logistic Regression
-The implementation of multinomial logistic regression. Gradient decent is adopted to refine the weight.
+The implementation of multinomial logistic regression using logistic loss gradient decent.
 
 #### TODO:
 1. Add one more dimension for weight to model the bias.
@@ -16,5 +15,5 @@ The implementation of multinomial logistic regression. Gradient decent is adopte
 3. Improve the data generation (the current one is too uniform to show the proper trend).
 
 ### Polynomial Regression
-The implemtation of polynomial regressoin using squared loss gradient decent.
+The implementation of polynomial regression using squared loss gradient decent.
 
