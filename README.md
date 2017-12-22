@@ -10,6 +10,9 @@ A method of vector quantization which is popular for cluster analysis in data mi
 #### Logistic Regression
 The implementation of multinomial logistic regression using logistic loss gradient decent.
 
+#### Linear Support Vector Machine
+The implementation of binary classification using hinge loss gradient decent.
+
 (TODO: Add regularizer. Now we simply use zero regularizer).
 
 ### Regression
